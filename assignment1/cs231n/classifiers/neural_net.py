@@ -97,7 +97,8 @@ class TwoLayerNet(object):
     exp_wt_sum = np.exp(scores)
     act = exp_wt_sum/np.resize(np.sum(exp_wt_sum,axis=1), (exp_wt_sum.shape[0], 1))
     loss = -np.sum(np.log(act[range(act.shape[0]), y]))
-    loss = loss/N + 0.5*reg*(np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
+    #loss = loss/N + 0.5*reg*(np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
+    loss = loss/N + 0.5*reg*(np.sum(W1*W1) + np.sum(W2*W2))
     pass
     #############################################################################
     #                              END OF YOUR CODE                             #
