@@ -294,9 +294,15 @@ class FullyConnectedNet(object):
       b_str = 'beta' + str(ind)
       cache_str = 'cache' + str(ind)
       if(self.use_batchnorm):  
-        curr_out, curr_cache = affine_bn_relu_forward(curr_in, self.params[wt_str], self.params[bias_str], self.params[g_str], self.params[b_str], self.bn_params[i])
+        temp_out, affine_cache = affine_bn_relu_forward(curr_in, self.params[wt_str], self.params[bias_str], self.params[g_str], self.params[b_str], self.bn_params[i])
       else: 
-        curr_out, curr_cache = affine_relu_forward(curr_in, self.params[wt_str], self.params[bias_str])
+        temp_out, affine_cache = affine_relu_forward(curr_in, self.params[wt_str], self.params[bias_str])
+      if(self.use_dropout):
+        curr_out, drop_cache = dropout_forward(temp_out, self.dropout_param)
+        curr_cache = (affine_cache, drop_cache)
+      else:
+        curr_out = temp_out
+        curr_cache = affine_cache
       curr_in = curr_out
       caches[cache_str] = curr_cache
       ind += 1
@@ -349,10 +355,16 @@ class FullyConnectedNet(object):
       g_str = 'gamma' + str(ind)
       b_str = 'beta' + str(ind)
       cache_str = 'cache' + str(ind)
+      if(self.use_dropout):
+        cache, drop_cache = caches[cache_str]
+        temp_grad = dropout_backward(curr_grad, drop_cache)
+      else:
+        cache = caches[cache_str]
+        temp_grad = curr_grad
       if(self.use_batchnorm):  
-        next_grad, grads[wt_str],grads[bias_str], grads[g_str], grads[b_str] = affine_bn_relu_backward(curr_grad, caches[cache_str]) 
+        next_grad, grads[wt_str],grads[bias_str], grads[g_str], grads[b_str] = affine_bn_relu_backward(temp_grad, cache) 
       else: 
-        next_grad, grads[wt_str],grads[bias_str] = affine_relu_backward(curr_grad, caches[cache_str]) 
+        next_grad, grads[wt_str],grads[bias_str] = affine_relu_backward(temp_grad, cache)
       grads[wt_str] += self.reg*self.params[wt_str]
       curr_grad = next_grad
       ind -= 1
