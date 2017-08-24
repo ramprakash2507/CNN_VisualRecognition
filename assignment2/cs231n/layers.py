@@ -441,12 +441,16 @@ def conv_backward_naive(dout, cache):
   W_out = 1 + (W + 2 * pad - WW) / stride
   X = np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant')
   dX = np.zeros(X.shape)
+  dw = np.zeros(w.shape)
   x_ind = 0
   y_ind = 0
   for i in range(H_out):
     for j in range(W_out):
       for k in range(F):
-        dX[:,:,x_ind:x_ind+HH:1,y_ind:y_ind+WW:1] += np.dot(dout[:,k,i,j],w[k,:,:,:])
+        temp = np.ones((dout.shape[0], w.shape[1],w.shape[2],w.shape[3]))
+        temp = temp*np.reshape(dout[:,k,i,j], (dout.shape[0],1,1,1))
+        dX[:,:,x_ind:x_ind+HH:1,y_ind:y_ind+WW:1] += temp*w[k,:,:,:]
+        dw[k,:,:,:] += np.sum(X[:,:,x_ind:x_ind+HH:1,y_ind:y_ind+WW:1]*np.reshape(dout[:,k,i,j], (dout.shape[0],1,1,1)), axis = 0)
       y_ind = y_ind + stride
     y_ind = 0
     x_ind = x_ind + stride
@@ -454,7 +458,9 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
-  dx = dX[:,:,1:X.shape[2]:1, 1:X.shape[3]:1]
+  dx = dX[:,:,1:X.shape[2]-1:1, 1:X.shape[3]-1:1]
+  db = np.sum(np.sum(np.sum(dout, axis = 0),axis=1),axis=1)
+  print db.shape
   return dx, dw, db
 
 
