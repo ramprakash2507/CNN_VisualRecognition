@@ -483,6 +483,18 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
+  N, C, H, W = x.shape
+  pool_height = pool_param['pool_height']
+  pool_width = pool_param['pool_width']
+  stride = pool_param['stride']
+  H_out = (H - pool_height)/stride + 1
+  W_out = (W - pool_width)/stride + 1
+  out = np.zeros((N,C,H_out,W_out))
+  for i in range(H_out):
+    for j in range(W_out):
+      h_ind = i*stride
+      w_ind = j*stride
+      out[:,:,i,j] = np.amax(x[:,:,h_ind:h_ind+pool_height:1, w_ind:w_ind+pool_width:1].reshape((N,C,-1)), axis = 2)
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -502,10 +514,27 @@ def max_pool_backward_naive(dout, cache):
   Returns:
   - dx: Gradient with respect to x
   """
+  x, pool_param = cache
+  pool_height = pool_param['pool_height']
+  pool_width = pool_param['pool_width']
+  stride = pool_param['stride']
   dx = None
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
+  _,_, H, W = x.shape
+  N, C, H_out, W_out = dout.shape
+  dx = np.zeros(x.shape)
+  for n in range(N):
+    for c in range(C):
+      for i in range(H_out): 
+        for j in range(W_out):
+          h_ind = i*stride
+          w_ind = j*stride
+          ind = np.argmax(x[n,c,h_ind:h_ind+pool_height:1, w_ind:w_ind+pool_width:1])
+          h = h_ind + ind/pool_width
+          w = w_ind + ind%pool_height
+          dx[n,c,h,w] = dout[n,c,i,j]
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
