@@ -47,6 +47,12 @@ class ThreeLayerConvNet(object):
     # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
     # of the output affine layer.                                              #
     ############################################################################
+    self.params['W1'] = weight_scale * np.random.randn(num_filters, input_dim[0], filter_size, filter_size)
+    self.params['W2'] = weight_scale * np.random.randn(num_filters*input_dim[1]*input_dim[2]/4, hidden_dim)
+    self.params['W3'] = weight_scale * np.random.randn(hidden_dim, num_classes)
+    self.params['b1'] = np.zeros(num_filters)
+    self.params['b2'] = np.zeros(hidden_dim)
+    self.params['b3'] = np.zeros(num_classes)
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -78,7 +84,11 @@ class ThreeLayerConvNet(object):
     # TODO: Implement the forward pass for the three-layer convolutional net,  #
     # computing the class scores for X and storing them in the scores          #
     # variable.                                                                #
-    ############################################################################
+    ############################################################################ 
+    conv_out, conv_cache = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+    #print conv_out.shape
+    aff_hid, aff_hid_cache = affine_relu_forward(conv_out, W2, b2)
+    scores, out_cache = affine_forward(aff_hid, W3, b3)
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -94,6 +104,14 @@ class ThreeLayerConvNet(object):
     # data loss using softmax, and make sure that grads[k] holds the gradients #
     # for self.params[k]. Don't forget to add L2 regularization!               #
     ############################################################################
+    loss, out_grad = softmax_loss(scores, y)
+    loss = loss + 0.5*self.reg*(np.sum(W1*W1) + np.sum(W2*W2) + np.sum(W3*W3))
+    dhid, grads['W3'], grads['b3'] = affine_backward(out_grad, out_cache) 
+    daff, grads['W2'], grads['b2'] = affine_relu_backward(dhid, aff_hid_cache)
+    din, grads['W1'], grads['b1'] = conv_relu_pool_backward(daff, conv_cache)
+    grads['W1'] += self.reg*self.params['W1']
+    grads['W2'] += self.reg*self.params['W2']
+    grads['W3'] += self.reg*self.params['W3']
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #
